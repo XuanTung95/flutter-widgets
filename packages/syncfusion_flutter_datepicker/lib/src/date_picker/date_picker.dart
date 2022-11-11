@@ -6930,11 +6930,28 @@ class _SfDateRangePickerState extends State<_SfDateRangePicker>
                 _isRtl,
                 _textScaleFactor,
                 widget.isHijri,
-                _localizations),
+                _localizations,
+              onClickCalendarTapCallbackForHeader: (isMonth) {
+                if (isMonth) {
+                  _controller.view = widget.isHijri
+                      ? DateRangePickerHelper.getHijriPickerView(DateRangePickerView.year)
+                      : DateRangePickerHelper.getPickerView(DateRangePickerView.year);
+                } else {
+                  //if (_view == DateRangePickerView.year) {
+                    _controller.view = widget.isHijri
+                        ? DateRangePickerHelper.getHijriPickerView(
+                        DateRangePickerView.decade)
+                        : DateRangePickerHelper.getPickerView(DateRangePickerView.decade);
+                  // }
+                }
+                  // _onClickCalendarTapCallbackForHeader(isMonth);
+              },
+            ),
           ),
-          onTapUp: (TapUpDetails details) {
-            _updateCalendarTapCallbackForHeader();
-          },
+          // onTapUp: (TapUpDetails details) {
+          //   // _updateCalendarTapCallbackForHeader();
+          //   // _updateCalendarTapCallbackForHeaderCustom();
+          // },
         ),
       ),
       _getViewHeaderView(widget.headerHeight),
@@ -7502,6 +7519,14 @@ class _SfDateRangePickerState extends State<_SfDateRangePicker>
     return selectedDates;
   }
 
+  void _onClickCalendarTapCallbackForHeader(bool clickMonth) {
+    if (clickMonth) {
+      _controller.view = DateRangePickerHelper.getPickerView(DateRangePickerView.year);
+    } else {
+      _controller.view = DateRangePickerHelper.getPickerView(DateRangePickerView.decade);
+    }
+  }
+
   // method to update the picker tapped call back for the header view
   void _updateCalendarTapCallbackForHeader() {
     if (_view == DateRangePickerView.century || !widget.allowViewNavigation) {
@@ -7522,6 +7547,30 @@ class _SfDateRangePickerState extends State<_SfDateRangePicker>
         _controller.view = widget.isHijri
             ? DateRangePickerHelper.getHijriPickerView(
                 DateRangePickerView.century)
+            : DateRangePickerHelper.getPickerView(DateRangePickerView.century);
+      }
+    }
+  }
+
+  void _updateCalendarTapCallbackForHeaderCustom() {
+    if (_view == DateRangePickerView.decade || !widget.allowViewNavigation) {
+      return;
+    }
+
+    if (_view == DateRangePickerView.month) {
+      _controller.view = widget.isHijri
+          ? DateRangePickerHelper.getHijriPickerView(DateRangePickerView.year)
+          : DateRangePickerHelper.getPickerView(DateRangePickerView.year);
+    } else {
+      if (_view == DateRangePickerView.year) {
+        _controller.view = widget.isHijri
+            ? DateRangePickerHelper.getHijriPickerView(
+            DateRangePickerView.decade)
+            : DateRangePickerHelper.getPickerView(DateRangePickerView.decade);
+      } else if (_view == DateRangePickerView.decade) {
+        _controller.view = widget.isHijri
+            ? DateRangePickerHelper.getHijriPickerView(
+            DateRangePickerView.century)
             : DateRangePickerHelper.getPickerView(DateRangePickerView.century);
       }
     }
@@ -7823,8 +7872,10 @@ class _PickerHeaderView extends StatefulWidget {
       this.textScaleFactor,
       this.isHijri,
       this.localizations,
-      {Key? key})
+      {Key? key, this.onClickCalendarTapCallbackForHeader,})
       : super(key: key);
+
+  final Function(bool clickMonth)? onClickCalendarTapCallbackForHeader;
 
   /// Defines the text scale factor of [SfDateRangePicker].
   final double textScaleFactor;
@@ -7977,6 +8028,12 @@ class _PickerHeaderViewState extends State<_PickerHeaderView> {
             widget.isHijri)) {
       prevArrowColor = prevArrowColor.withOpacity(arrowColor.opacity * 0.5);
     }
+    final Widget headerTextCustom = _getHeaderTextCustom(headerWidth, isMobilePlatform);
+
+    if (widget.view == DateRangePickerView.month || widget.view == DateRangePickerView.year
+        || widget.view == DateRangePickerView.decade) {
+      return headerTextCustom;
+    }
 
     final Widget headerText = _getHeaderText(headerWidth, isMobilePlatform);
     if (widget.navigationMode == DateRangePickerNavigationMode.scroll &&
@@ -8111,6 +8168,91 @@ class _PickerHeaderViewState extends State<_PickerHeaderView> {
         )));
   }
 
+  CustomDisplayMonth customDisplayMonth = CustomDisplayMonth();
+
+  Widget _getHeaderTextCustom(double headerWidth, bool isMobilePlatform) {
+
+    if (widget.view == DateRangePickerView.month || widget.view == DateRangePickerView.year
+        || widget.view == DateRangePickerView.decade) {
+      return MyCustomHeaderMonth(visibleDates: widget.visibleDates, getText: () {
+        final HeaderTextMethodData text = _getHeaderTextMethod(
+            widget.visibleDates.value,
+            widget.view,
+            0,
+            widget.isHijri,
+            widget.numberOfWeeksInView,
+            widget.monthFormat,
+            widget.enableMultiView,
+            widget.headerStyle,
+            widget.navigationDirection,
+            widget.locale,
+            widget.localizations);
+        return text;
+      }, customDisplayMonth: customDisplayMonth, clickMonth: (String currMonth) {
+        customDisplayMonth.monthToDisplay = currMonth;
+        widget.onClickCalendarTapCallbackForHeader?.call(true);
+      }, clickYear: (String currMonth, String currYear) {
+        customDisplayMonth.monthToDisplay = currMonth;
+        customDisplayMonth.yearToDisplay = currYear;
+        widget.onClickCalendarTapCallbackForHeader?.call(false);
+      },);
+    }
+    return MouseRegion(
+        onEnter: (PointerEnterEvent event) {
+          if (widget.view == DateRangePickerView.century ||
+              (widget.isHijri && widget.view == DateRangePickerView.decade) ||
+              isMobilePlatform) {
+            return;
+          }
+
+          setState(() {
+            _hovering = true;
+          });
+        },
+        onHover: (PointerHoverEvent event) {
+          if (widget.view == DateRangePickerView.century ||
+              (widget.isHijri && widget.view == DateRangePickerView.decade) ||
+              isMobilePlatform) {
+            return;
+          }
+
+          setState(() {
+            _hovering = true;
+          });
+        },
+        onExit: (PointerExitEvent event) {
+          setState(() {
+            _hovering = false;
+          });
+        },
+        child: Builder(
+          builder: (context) {
+            return RepaintBoundary(
+                child: CustomPaint(
+                  // Returns the header view  as a child for the picker.
+                  painter: _PickerHeaderPainter(
+                      widget.visibleDates,
+                      widget.headerStyle,
+                      widget.view,
+                      widget.numberOfWeeksInView,
+                      widget.monthFormat,
+                      widget.datePickerTheme,
+                      widget.isRtl,
+                      widget.locale,
+                      widget.enableMultiView,
+                      widget.multiViewSpacing,
+                      widget.hoverColor,
+                      _hovering,
+                      widget.textScaleFactor,
+                      widget.isHijri,
+                      widget.localizations,
+                      widget.navigationDirection),
+                  size: Size(headerWidth, widget.height),
+                ));
+          }
+        ));
+  }
+
   Container _getLeftArrow(double arrowWidth, Color arrowColor,
       Color prevArrowColor, double arrowSize) {
     return Container(
@@ -8183,6 +8325,120 @@ class _PickerHeaderViewState extends State<_PickerHeaderView> {
             size: arrowSize,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class MyCustomHeaderMonth extends StatefulWidget {
+
+  static String packagename = 'syncfusion_flutter_datepicker';
+
+  const MyCustomHeaderMonth({
+    Key? key,
+    required this.visibleDates,
+    required this.getText,
+    required this.customDisplayMonth,
+    required this.clickMonth,
+    required this.clickYear,
+  }) : super(key: key);
+
+  final ValueNotifier<List<dynamic>> visibleDates;
+  final HeaderTextMethodData Function() getText;
+  final CustomDisplayMonth customDisplayMonth;
+  final Function(String currMonth) clickMonth;
+  final Function(String currMonth, String currYear) clickYear;
+
+  @override
+  State<MyCustomHeaderMonth> createState() => _MyCustomHeaderMonthState();
+}
+
+class _MyCustomHeaderMonthState extends State<MyCustomHeaderMonth> {
+  String month = '';
+  String year = '';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      widget.visibleDates.addListener(onChange);
+    });
+  }
+
+  void onChange() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.visibleDates.removeListener(onChange);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textData = widget.getText();
+    final text = textData.text;
+    bool isMonth = textData.view == DateRangePickerView.month;
+    if (isMonth) {
+      final int idx = text.lastIndexOf(' ');
+      if (idx > -1) {
+        month = text.substring(0, idx);
+        print('month = $month text = $text');
+        year = text.substring(idx);
+      }
+    }
+    bool isYear = textData.view == DateRangePickerView.year;
+    if (isYear) {
+      year = text;
+    }
+
+    bool isDecade = textData.view == DateRangePickerView.decade;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(children: [
+        GestureDetector(
+          onTap: () {
+            if (isMonth) {
+              widget.clickMonth(month);
+            }
+          },
+          child: Container(
+            color: Colors.transparent,
+            child: Row(
+            children: [
+              Image.asset('assets/images/ic_calendar.png', width: 21, height: 21, package: MyCustomHeaderMonth.packagename),
+              const SizedBox(width: 8),
+              Text((isYear || isDecade) ? widget.customDisplayMonth.monthToDisplay : month,
+                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16, color:
+                Color(isYear ? 0xFF0989FE : 0xFF04142C),),),
+            ],
+      ),
+          ),
+        ),
+        const Spacer(),
+        GestureDetector(
+          onTap: () {
+            // if (isMonth) {
+              widget.clickYear(month, year);
+            // }
+          },
+          child: Container(
+            color: Colors.transparent,
+            child: Row(
+              children: [
+                Text(isDecade ? widget.customDisplayMonth.yearToDisplay : year,
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16, color:
+                  Color(isDecade ? 0xFF0989FE : 0xFF04142C),),),
+                const SizedBox(width: 8),
+                Image.asset('assets/images/ic_arrow_down.png', width: 11, height: 12, package: MyCustomHeaderMonth.packagename),
+              ],
+            ),
+          ),
+        )],
       ),
     );
   }
@@ -8494,12 +8750,21 @@ class _PickerViewHeaderPainter extends CustomPainter {
             : i;
         index = index + (currentViewIndex * datesCount);
         currentDate = visibleDates[index];
-        String dayText =
-            DateFormat(monthViewSettings.dayFormat, locale.toString())
-                .format(isHijri ? currentDate.toDateTime() : currentDate)
-                .toUpperCase();
-        dayText = _updateViewHeaderFormat(dayText);
-
+        String dayText;
+        if (locale.toString() == 'vi') {
+          DateTime curr = isHijri ? currentDate.toDateTime() : currentDate;
+          if (curr.weekday == 7) {
+            dayText = "CN";
+          } else {
+            dayText = 'Thứ ${curr.weekday + 1}';
+          }
+        } else {
+          dayText =
+          DateFormat(monthViewSettings.dayFormat, locale.toString())
+              .format(isHijri ? currentDate.toDateTime() : currentDate)
+              .toUpperCase();
+          dayText = _updateViewHeaderFormat(dayText);
+        }
         if (hasToday &&
             currentDate.weekday == today.weekday &&
             (isTodayMonth || isVerticalScroll)) {
@@ -13208,6 +13473,40 @@ String _getMonthHeaderText(
   }
 }
 
+class HeaderTextMethodData {
+  HeaderTextMethodData({required this.text, required this.view});
+
+  final String text;
+  final DateRangePickerView view;
+}
+
+HeaderTextMethodData _getHeaderTextMethod(
+    List<dynamic> dates,
+    DateRangePickerView view,
+    int index,
+    bool isHijri,
+    int numberOfWeeksInView,
+    String? monthFormat,
+    bool enableMultiView,
+    DateRangePickerHeaderStyle headerStyle,
+    DateRangePickerNavigationDirection navigationDirection,
+    Locale locale,
+    SfLocalizations localizations) {
+  String text = _getHeaderText(
+      dates,
+      view,
+      index,
+      isHijri,
+      numberOfWeeksInView,
+      monthFormat,
+      enableMultiView,
+      headerStyle,
+      navigationDirection,
+      locale,
+      localizations);
+  return HeaderTextMethodData(text: text, view: view);
+}
+
 String _getHeaderText(
     List<dynamic> dates,
     DateRangePickerView view,
@@ -13335,4 +13634,10 @@ bool _isSwipeInteractionEnabled(
 bool _isMultiViewEnabled(_SfDateRangePicker picker) {
   return picker.enableMultiView &&
       picker.navigationMode != DateRangePickerNavigationMode.scroll;
+}
+
+
+class CustomDisplayMonth {
+  String monthToDisplay = '';
+  String yearToDisplay = '';
 }
