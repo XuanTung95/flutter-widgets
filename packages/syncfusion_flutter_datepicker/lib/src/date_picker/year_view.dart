@@ -2548,7 +2548,8 @@ abstract class _IYearViewRenderObject extends RenderBox
         todayHighlightColor ?? datePickerTheme.todayHighlightColor!;
     _todayHighlightPaint.isAntiAlias = true;
     _todayHighlightPaint.strokeWidth = 1.0;
-    _todayHighlightPaint.style = PaintingStyle.stroke;
+    // change fill type
+    _todayHighlightPaint.style = PaintingStyle.fill;
     final double maximumHighlight =
         centerYPosition - textHalfHeight - selectionPadding;
     if (maximumHighlight < highlightPadding) {
@@ -2606,8 +2607,11 @@ abstract class _IYearViewRenderObject extends RenderBox
     }
 
     if (isCurrentDate) {
-      return cellStyle.todayTextStyle as TextStyle? ??
+      var ts = cellStyle.todayTextStyle as TextStyle? ??
           datePickerTheme.todayCellTextStyle!;
+      // change fill type
+      ts = ts.copyWith(color: Colors.white);
+      return ts;
     }
 
     if (!isActiveDate && !_isHijri) {
