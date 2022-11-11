@@ -8386,7 +8386,6 @@ class _MyCustomHeaderMonthState extends State<MyCustomHeaderMonth> {
       final int idx = text.lastIndexOf(' ');
       if (idx > -1) {
         month = text.substring(0, idx);
-        print('month = $month text = $text');
         year = text.substring(idx);
       }
     }
