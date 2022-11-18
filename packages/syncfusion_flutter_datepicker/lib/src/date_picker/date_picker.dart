@@ -11901,7 +11901,9 @@ class _PickerViewState extends State<_PickerView>
         widget.width,
         widget.height,
         widget.disableDatePredicates,
-        widget.picker.extendableRangeSelectionDirection);
+        widget.picker.extendableRangeSelectionDirection,
+        controller: widget.controller,
+    );
   }
 
   GestureDragStartCallback? _getDragStartCallback() {

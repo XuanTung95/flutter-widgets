@@ -46,7 +46,9 @@ class YearView extends StatefulWidget {
       this.width,
       this.height,
       this.disableDatesCollection,
-      this.extendableRangeSelectionDirection);
+      this.extendableRangeSelectionDirection,
+      {this.controller}
+      );
 
   /// Defines the year cell style.
   final dynamic cellStyle;
@@ -159,6 +161,8 @@ class YearView extends StatefulWidget {
   /// Defines the extendable range selection direction
   /// of the [SfDateRangePicker].
   final ExtendableRangeSelectionDirection extendableRangeSelectionDirection;
+
+  final dynamic controller;
 
   @override
   // ignore: library_private_types_in_public_api
@@ -347,7 +351,9 @@ class _YearViewState extends State<YearView> {
               widget.localizations,
               widget.navigationDirection,
               widget.disableDatesCollection,
-              widgets: _children);
+              widgets: _children,
+              controller: widget.controller,
+          );
         }
       case DateRangePickerSelectionMode.multiple:
         {
@@ -419,7 +425,9 @@ class _YearViewState extends State<YearView> {
               widget.localizations,
               widget.navigationDirection,
               widget.disableDatesCollection,
-              widgets: _children);
+              widgets: _children,
+              controller: widget.controller,
+          );
         }
       case DateRangePickerSelectionMode.extendableRange:
         {
@@ -612,7 +620,7 @@ class _SingleSelectionRenderWidget extends MultiChildRenderObjectWidget {
       this.localizations,
       this.navigationDirection,
       this.disableDatesCollection,
-      {required List<Widget> widgets})
+      {required List<Widget> widgets, this.controller})
       : super(children: widgets);
 
   /// Defines the year cell style.
@@ -701,6 +709,8 @@ class _SingleSelectionRenderWidget extends MultiChildRenderObjectWidget {
 
   final List<dynamic>? disableDatesCollection;
 
+  final dynamic controller;
+
   @override
   _SingleSelectionRenderObject createRenderObject(BuildContext context) {
     return _SingleSelectionRenderObject(
@@ -733,7 +743,8 @@ class _SingleSelectionRenderWidget extends MultiChildRenderObjectWidget {
         navigationDirection,
         localizations,
         selectedDate,
-        disableDatesCollection);
+        disableDatesCollection,
+        controller: this.controller);
   }
 
   @override
@@ -1000,7 +1011,7 @@ class _RangeSelectionRenderWidget extends MultiChildRenderObjectWidget {
       this.localizations,
       this.navigationDirection,
       this.disableDatesCollection,
-      {required List<Widget> widgets})
+      {required List<Widget> widgets, this.controller})
       : super(children: widgets);
 
   /// Defines the year cell style.
@@ -1089,6 +1100,8 @@ class _RangeSelectionRenderWidget extends MultiChildRenderObjectWidget {
 
   final List<dynamic>? disableDatesCollection;
 
+  final dynamic controller;
+
   @override
   _RangeSelectionRenderObject createRenderObject(BuildContext context) {
     return _RangeSelectionRenderObject(
@@ -1121,7 +1134,9 @@ class _RangeSelectionRenderWidget extends MultiChildRenderObjectWidget {
         navigationDirection,
         localizations,
         selectedRange,
-        disableDatesCollection);
+        disableDatesCollection,
+        controller: controller
+    );
   }
 
   @override
@@ -2674,7 +2689,8 @@ class _SingleSelectionRenderObject extends _IYearViewRenderObject {
       DateRangePickerNavigationDirection navigationDirection,
       SfLocalizations localizations,
       this._selectedDate,
-      List<dynamic>? disableDatesCollection)
+      List<dynamic>? disableDatesCollection,
+      {this.controller})
       : super(
             visibleDates,
             cellStyle,
@@ -2710,6 +2726,8 @@ class _SingleSelectionRenderObject extends _IYearViewRenderObject {
 
   dynamic get selectedDate => _selectedDate;
 
+  final dynamic controller;
+
   set selectedDate(dynamic value) {
     if (isSameDate(_selectedDate, value)) {
       return;
@@ -2725,7 +2743,7 @@ class _SingleSelectionRenderObject extends _IYearViewRenderObject {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    _drawYearCells(context, size, this);
+    _drawYearCells(context, size, this, controller: controller);
   }
 
   @override
@@ -2983,7 +3001,9 @@ class _RangeSelectionRenderObject extends _IYearViewRenderObject {
       DateRangePickerNavigationDirection navigationDirection,
       SfLocalizations localizations,
       this._selectedRange,
-      List<dynamic>? disableDatesCollection)
+      List<dynamic>? disableDatesCollection,
+      {this.controller}
+      )
       : super(
             visibleDates,
             cellStyle,
@@ -3015,6 +3035,8 @@ class _RangeSelectionRenderObject extends _IYearViewRenderObject {
             localizations,
             disableDatesCollection);
 
+  dynamic controller;
+
   dynamic _selectedRange;
 
   dynamic get selectedRange => _selectedRange;
@@ -3037,7 +3059,7 @@ class _RangeSelectionRenderObject extends _IYearViewRenderObject {
   @override
   void paint(PaintingContext context, Offset offset) {
     _selectedIndex = <int>[];
-    _drawYearCells(context, size, this);
+    _drawYearCells(context, size, this, controller: controller);
   }
 
   @override
@@ -3761,7 +3783,7 @@ bool _isCurrentViewDateCell(dynamic date, int index, List<dynamic> visibleDates,
 
 /// Draws the year cell on canvas based on selection mode.
 void _drawYearCells(
-    PaintingContext context, Size size, _IYearViewRenderObject yearView) {
+    PaintingContext context, Size size, _IYearViewRenderObject yearView, {dynamic controller}) {
   final Canvas canvas = context.canvas;
   double webUIPadding = 0;
   int count = 1;
@@ -3962,8 +3984,25 @@ void _drawYearCells(
       }
 
       final dynamic date = yearView.visibleDates[currentIndex];
-      final bool isCurrentDate =
-          DateRangePickerHelper.isSameCellDates(date, today, view);
+      DateTime? selectedFromDate;
+      DateTime? selectedToDate;
+      if (controller != null) {
+        print("$controller");
+        if (controller.selectedRange is PickerDateRange) {
+          PickerDateRange selectedRange = controller.selectedRange;
+          selectedFromDate = selectedRange.startDate;
+          selectedToDate = selectedRange.endDate;
+        } else if (controller.selectedDate is DateTime) {
+          selectedFromDate = controller.selectedDate;
+        }
+      }
+      bool isCurrentDate = selectedFromDate == null ? false :
+          DateRangePickerHelper.isSameCellDates(date, selectedFromDate!, view);
+
+      if (!isCurrentDate && selectedToDate != null) {
+        isCurrentDate = DateRangePickerHelper.isSameCellDates(date, selectedToDate, view);
+      }
+
       final bool isSelected = selectedIndex.contains(currentIndex);
       final bool isEnableDate = DateRangePickerHelper.isBetweenMinMaxDateCell(
           date,
