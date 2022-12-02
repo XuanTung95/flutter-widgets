@@ -8401,7 +8401,7 @@ class _MyCustomHeaderMonthState extends State<MyCustomHeaderMonth> {
       child: Row(children: [
         GestureDetector(
           onTap: () {
-            if (isMonth) {
+            if (isMonth || isDecade) {
               widget.clickMonth(month);
             }
           },
