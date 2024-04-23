@@ -8412,8 +8412,9 @@ class _MyCustomHeaderMonthState extends State<MyCustomHeaderMonth> {
               Image.asset('assets/images/ic_calendar.png', width: 21, height: 21, package: MyCustomHeaderMonth.packagename),
               const SizedBox(width: 8),
               Text((isYear || isDecade) ? widget.customDisplayMonth.monthToDisplay : month,
-                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16, color:
-                Color(isYear ? 0xFF0989FE : 0xFF04142C),),),
+                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16,
+                    color: Color(0xFF000000) // Color(isYear ? 0xFF0989FE : 0xFF04142C),
+                ),),
             ],
       ),
           ),
@@ -8430,8 +8431,9 @@ class _MyCustomHeaderMonthState extends State<MyCustomHeaderMonth> {
             child: Row(
               children: [
                 Text(isDecade ? widget.customDisplayMonth.yearToDisplay : year,
-                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16, color:
-                  Color(isDecade ? 0xFF0989FE : 0xFF04142C),),),
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16,
+                      color: Color(0xFF000000) //Color(isDecade ? 0xFF0989FE : 0xFF04142C),
+                  ),),
                 const SizedBox(width: 8),
                 Image.asset('assets/images/ic_arrow_down.png', width: 11, height: 12, package: MyCustomHeaderMonth.packagename),
               ],
